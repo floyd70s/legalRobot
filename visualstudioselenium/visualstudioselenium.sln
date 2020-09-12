@@ -1,0 +1,17 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "visualstudioselenium", "visualstudioselenium.csproj", "{A2A37DF4-DA04-49F1-BA3D-815A619BAC9D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|anycpu = Debug|anycpu
+		Release|anycpu = Release|anycpu
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A2A37DF4-DA04-49F1-BA3D-815A619BAC9D}.Debug|anycpu.ActiveCfg = Debug|anycpu
+		{A2A37DF4-DA04-49F1-BA3D-815A619BAC9D}.Debug|anycpu.Build.0 = Debug|anycpu
+		{A2A37DF4-DA04-49F1-BA3D-815A619BAC9D}.Release|anycpu.ActiveCfg = Release|anycpu
+		{A2A37DF4-DA04-49F1-BA3D-815A619BAC9D}.Release|anycpu.Build.0 = Release|anycpu
+	EndGlobalSection
+EndGlobal
