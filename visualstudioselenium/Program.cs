@@ -2,17 +2,18 @@
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using iText.Kernel.Pdf.Canvas.Parser;
-using iText.Pdfocr.Tesseract4;
 using System.Net;
-using System.IO;
-using Newtonsoft.Json;
 using System.Configuration;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
 using Microsoft.Data.Sqlite;
-
 using System.Text;
+using suseso;
+using System.Collections.Generic;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Dynamic;
+
 
 namespace suseso
 {
@@ -22,17 +23,29 @@ namespace suseso
         public static void Main(string[] args)
         {
 
+            int range = Convert.ToInt32(ConfigurationManager.AppSettings["range"]);   //365 days
 
-            string conStringSQLite = ConfigurationManager.ConnectionStrings["conStringSQLite"].ConnectionString;
-            string PJRobotSQlite = ConfigurationManager.AppSettings["PJRobotSQlite"];
-            string iniDate = "2019-09-29";//DateTime.Now.ToString("yyyy/MM/dd"); 
-            string endDate = "2020-09-29";// DateTime.Now.AddDays(-365).ToString("yyyy/MM/dd");
-            int start = 0;
-            int group = 0;
-            string jResult = "-";
-
+            string iniDate = "2019-09-29";                  // DateTime.Now.ToString("yyyy/MM/dd"); 
+            string endDate = "2020-09-29";                  // DateTime.Now.AddDays(-365).ToString("yyyy/MM/dd");
+            int start = 0;                                  // start for pagination
+            int group = 0;                                  // group for pagination 
+            string jResult = "-";                            // string for save JSON 
+            string sResult = "";                            // string for print messages  
+            int iCountCycle = 0;                            // records saved in the current cycle
+            int iGeneralCount = 0;                          // number of records saved
+            int iMainCount = 0;                             // total number of records analyzed
+            int iNotSaved = 0;                              // total number of records not saved
             while (jResult != "")
             {
+                iCountCycle = 0;
+
+                Console.WriteLine("****************************************");
+                Console.WriteLine(" Ciclo {0}", group);
+                Console.WriteLine("****************************************");
+
+                //-----------------------------------------------------------------------------------------------------------------------
+                // get info from website SUSESO
+                //-----------------------------------------------------------------------------------------------------------------------
                 string URL = "https://suseso-engine.newtenberg.com/mod/find/cgi/find.cgi?action=jsonquery&" +
                              "engine=SwisheFind&rpp=16&" +
                              "cid=512&" +
@@ -53,11 +66,79 @@ namespace suseso
                 int endJson = siteBase.IndexOf("]");
 
                 jResult = siteBase.Substring(iniJson, endJson - iniJson + 1);
-                DataTable dtResult = extractInfoSuseso(jResult);
-                DataTable dtJurAdministrativa = GetData(PJRobotSQlite, "select * from planilla");
+                DataTable dtResult = extractInfoSuseso(jResult);  //--> datatable with the JSON data
+                //-----------------------------------------------------------------------------------------------------------------------
+
+                //-----------------------------------------------------------------------------------------------------------------------
+                // we get all the data
+                //-----------------------------------------------------------------------------------------------------------------------
+                var listProduct = JsonConvert.DeserializeObject<List<ResponseSuseso>>(jResult);
+
+                //-----------------------------------------------------------------------------------------------------------------------
+                // we get all the data
+                //-----------------------------------------------------------------------------------------------------------------------
+                foreach (dynamic prod in listProduct)
+                {
+                    int aid = Convert.ToInt32(prod.aid.ToString());
+                    string title = prod.title;
+                    string abstrac = prod.abstrac;
+                    string name = prod.name;
+                    string theme = prod.theme;
+                    string comment = prod.comment;
+                    string linkedCirculars = prod.linkedCirculars;
+                    DateTime insertDate = System.DateTime.Now;
+                    int status = Convert.ToInt32(ConfigurationManager.AppSettings["statusByDefault"]); ;
+                    DateTime sentenceDate = Convert.ToDateTime(prod.sentenceDate);
+
+                    Suseso mySuseso = new Suseso(aid, title, abstrac, name, theme, comment, linkedCirculars, insertDate, status, sentenceDate);
+
+                    //-----------------------------------------------------------------------------------------------------------------------
+                    // get records from SQLite database suseso 
+                    //-----------------------------------------------------------------------------------------------------------------------
+                    bool bExistAID = mySuseso.validateAID();
+
+                    if (bExistAID)
+                    {
+                        sResult = "El registro  \"{0}\" ya fue ingresado anteriormente." + aid;
+                    }
+                    else
+                    {
+                        sResult = mySuseso.Add();
+                        if (sResult == "ok")
+                        {
+                            iGeneralCount++;
+                            iCountCycle++;
+                        }
+                        else{
+                            iNotSaved++;
+                        }
+                    }
+                    iMainCount++;
+                }
+
+                //-----------------------------------------------------------------------------------------------------------------------
+                // if no new records were entered in the loop, the initial loop is terminated.
+                //-----------------------------------------------------------------------------------------------------------------------
+                if (iCountCycle == 0)
+                {
+                    jResult = "";
+                }
+                else
+                {
+                    jResult = "----";
+                }
+
                 group++;
             }
 
+            Console.WriteLine("-----------------------------------------------------------------");
+            Console.WriteLine("-- PASO 1                                                        ");
+            Console.WriteLine("-- FIN DE LA OBTENCION DE DATOS                                  ");
+            Console.WriteLine("-- A LAS " + System.DateTime.Now.ToString("yyyy/MM/dd hh:mm:ss"));
+            Console.WriteLine("-- TOTAL DE REGISTROS REVISADOS :" + iMainCount);
+            Console.WriteLine("-- TOTAL DE REGISTROS INGRESADOS:" + iGeneralCount);
+            Console.WriteLine("-- TOTAL DE REGISTROS NO INGRESADOS:" + iNotSaved);
+            Console.WriteLine("-- PAGINAS RECORRIDAS :" + iCountCycle);
             Console.WriteLine("-----------------------------------------------------------------");
 
         }
@@ -72,54 +153,6 @@ namespace suseso
             DataTable dt = (DataTable)JsonConvert.DeserializeObject(jResult, typeof(DataTable));
             return dt;
         }
-
-
-        /// <summary>
-        /// generic function for execute SQL command with SQLite BDDriver.
-        /// </summary>
-        /// <param name="query">query to execute</param>
-        /// <param name="connectionString"></param>
-        /// <returns>return DataTable with result</returns>
-        public static DataTable GetData(string connectionString, string query)
-        {
-            DataTable dt = new DataTable();
-            Microsoft.Data.Sqlite.SqliteConnection connection;
-            Microsoft.Data.Sqlite.SqliteCommand command;
-
-            connection = new Microsoft.Data.Sqlite.SqliteConnection("Data Source= /Users/claudioperez/Documents/programacion/legalRobot/visualstudioselenium/BD/PJRobots.sqlite");
-            try
-            {
-                connection.Open();
-                command = new Microsoft.Data.Sqlite.SqliteCommand(query, connection);
-                dt.Load(command.ExecuteReader());
-                connection.Close();
-            }
-            catch
-            {
-            }
-
-            return dt;
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
         /// <summary>
@@ -138,22 +171,17 @@ namespace suseso
                 Console.WriteLine("Successfully Downloaded File \"{0}\" from \"{1}\"", sAid, sFilePDF);
             }
         }
-
-
-
-
         public static string extractWebSuseso(string URL)
         {
             try
             {
                 string docImportSrc = string.Empty;
                 string infoBase = "";
-                //se descarga el archivo el JSON con la info de suseso.
+                //get JSON from suseso
                 using (WebClient webClient = new WebClient())
                 {
                     docImportSrc = URL;
                     infoBase = webClient.DownloadString(URL);
-                    //webClient.DownloadFile(docImportSrc,"");
                 }
                 Console.WriteLine("load website Ok");
                 return infoBase;
@@ -162,13 +190,11 @@ namespace suseso
             {
                 Console.WriteLine("[Fatal Error]\r\n" + ex.Message + "\r\n" + ex.StackTrace + "\r\n" + ex.InnerException + "\r\n" + ex.Source);
                 Console.WriteLine("........Fail");
-                //si no logra descargar no registra nada en la db
                 return "error";
             }
 
 
         }
-
         public static string ExtractTextFromPDF(string filePath)
         {
             PdfReader pdfReader = new PdfReader(filePath);
@@ -184,6 +210,7 @@ namespace suseso
             pdfReader.Close();
             return pageContent;
         }
+
     }
 }
 
