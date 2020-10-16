@@ -2,9 +2,10 @@
   <MonoDevelop.Ide.ItemProperties.suseso PreferredExecutionTarget="MonoDevelop.Default" />
   <MonoDevelop.Ide.Workbench>
     <Files>
-      <File FileName="Program.cs" Line="194" Column="14" />
-      <File FileName="Suseso.cs" Line="81" Column="14" />
-      <File FileName="DataManager.cs" Line="71" Column="1" />
+      <File FileName="Program.cs" Line="31" Column="83" />
+      <File FileName="JurAdmin.cs" Line="94" Column="1" />
+      <File FileName="DataManager.cs" Line="66" Column="1" />
+      <File FileName="Suseso.cs" Line="114" Column="1" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -18,7 +19,7 @@
       <Pad Id="MonoDevelop.Debugger.WatchPad">
         <State>
           <Value>query</Value>
-          <Value>catch</Value>
+          <Value>SQL</Value>
         </State>
       </Pad>
     </Pads>
@@ -27,7 +28,9 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|anycpu" />
   <Debugger.DebugSourceFolders />
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
-    <BreakpointStore />
+    <BreakpointStore>
+      <Breakpoint file="/Users/claudioperez/Documents/programacion/legalRobot/visualstudioselenium/Suseso.cs" relfile="Suseso.cs" line="114" column="1" />
+    </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MultiItemStartupConfigurations />
 </Properties>
