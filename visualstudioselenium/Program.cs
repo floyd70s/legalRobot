@@ -1,8 +1,5 @@
 ﻿using System;
-using iText.Kernel.Pdf;
-using iText.Kernel.Pdf.Canvas.Parser.Listener;
-using iText.Kernel.Pdf.Canvas.Parser;
-using System.Net;
+
 using System.Configuration;
 using System.Data;
 using System.Data.SQLite;
@@ -19,15 +16,13 @@ namespace suseso
 {
     class MainClass
     {
-
         public static void Main(string[] args)
         {
-
             try
             {
+                Console.Clear();
                 int range = Convert.ToInt32(ConfigurationManager.AppSettings["range"]);     //365 days
-                string PDFPath = ConfigurationManager.AppSettings["PDFPath"];     //365 days
-
+                string PDFPath = ConfigurationManager.AppSettings["PDFPath"];               //Path to save PDF
                 string iniDate = DateTime.Now.AddDays(-365).ToString("yyyy/MM/dd"); ;       // DateTime.Now.AddDays(-365).ToString("yyyy/MM/dd"); 
                 string endDate = DateTime.Now.ToString("yyyy/MM/dd");                       // DateTime.Now.ToString("yyyy/MM/dd"); 
                 int start = 0;                                                              // start for pagination
@@ -38,13 +33,16 @@ namespace suseso
                 int iGeneralCount = 0;                                                      // number of records saved
                 int iMainCount = 0;                                                         // total number of records analyzed
                 int iNotSaved = 0;                                                          // total number of records not saved
-                while (jResult != "")
-                {
-                    iCountCycle = 0;
+                int iPage = 0;                                                              // page
+                JurAdmin miJurAdmin = new JurAdmin();                                       // new instance of JurAdmin
+                Suseso miSuseso = new Suseso();                                             // new instance of SUSESO
 
+                while (jResult != "" || start < 128)
+                {
                     Console.WriteLine("****************************************");
-                    Console.WriteLine(" Ciclo {0}", group);
+                    Console.WriteLine(" Ciclo {0} registros:{1} ", iPage, start);
                     Console.WriteLine("****************************************");
+                    iCountCycle = 0;
 
                     //-----------------------------------------------------------------------------------------------------------------------
                     // get info from website SUSESO
@@ -64,12 +62,11 @@ namespace suseso
                                  "T23%3A59%3A59%20-s%20property-value.546.iso8601%20desc%20title%20desc&" +
                                  "callback=jQuery20009428819093757522_1601343927812&_=1601343927813";
 
-                    string siteBase = extractWebSuseso(URL);
+                    string siteBase = miSuseso.extractWebSuseso(URL);
                     int iniJson = siteBase.IndexOf("[");
-                    int endJson = siteBase.IndexOf("]");
+                    int endJson = siteBase.IndexOf("properties");
 
-                    jResult = siteBase.Substring(iniJson, endJson - iniJson + 1);
-                    //-----------------------------------------------------------------------------------------------------------------------
+                    jResult = siteBase.Substring(iniJson, endJson - iniJson - 3);
 
                     //-----------------------------------------------------------------------------------------------------------------------
                     // we get all the data
@@ -93,7 +90,7 @@ namespace suseso
                         }
                         else
                         {
-                            sResult = ElementSuseso.Add();
+                            sResult = ElementSuseso.addElement();
                             if (sResult == "ok")
                             {
                                 iGeneralCount++;
@@ -106,7 +103,6 @@ namespace suseso
                         }
                         iMainCount++;
                     }
-
                     //-----------------------------------------------------------------------------------------------------------------------
                     // if no new records were entered in the loop, the initial loop is terminated.
                     //-----------------------------------------------------------------------------------------------------------------------
@@ -118,7 +114,11 @@ namespace suseso
                     {
                         jResult = "----";
                     }
-                    group++;
+                    //-----------------------------------------------------------------------------------------------------------------------
+                    // This variable is used to keep track of the paging.
+                    //-----------------------------------------------------------------------------------------------------------------------
+                    start = start + 16;
+                    iPage++;
                 }
 
                 #region COMMENTS
@@ -127,7 +127,7 @@ namespace suseso
                 Console.WriteLine("-- FIN DE LA OBTENCION DE DATOS                                  ");
                 Console.WriteLine("-- A LAS " + System.DateTime.Now.ToString("yyyy/MM/dd hh:mm:ss"));
                 Console.WriteLine("-- TOTAL DE REGISTROS REVISADOS :" + iMainCount);
-                Console.WriteLine("-- TOTAL DE REGISTROS INGRESADOS:" + iGeneralCount);
+                Console.WriteLine("-- TOTAL DE REGISTROS INGRESADOS PARA VALIDAR:" + iGeneralCount);
                 Console.WriteLine("-- TOTAL DE REGISTROS NO INGRESADOS:" + iNotSaved);
                 Console.WriteLine("-- PAGINAS RECORRIDAS :" + iCountCycle);
                 Console.WriteLine("-----------------------------------------------------------------");
@@ -139,107 +139,46 @@ namespace suseso
                 Console.WriteLine("-- SE GUARDA EN TXT EL CONTENIDO                                 ");
                 Console.WriteLine("-----------------------------------------------------------------");
                 #endregion
-                JurAdmin miJurAdmin = new JurAdmin();
-                Suseso miSuseso = new Suseso();
 
-                DataTable miDataTableSuseso = miSuseso.getAll();
+
+                DataTable miDataTableSuseso = miSuseso.getAll();                //get pending records from SUSESO - Status=0
 
                 foreach (DataRow dtRow in miDataTableSuseso.Rows)
                 {
-                    miJurAdmin.rol = dtRow[0].ToString();
+                    string sAID = dtRow[0].ToString();
+                    miSuseso.aid = sAID;
                     bool bExistAIDJur = miJurAdmin.validateRol();
 
                     if (bExistAIDJur)
                     {
-                        Console.WriteLine("EXISTE");
+                        Console.WriteLine("EL REGISTRO {0} YA EXISTE EN JUR_ADMINISTRATIVA", dtRow[0].ToString());
+                        miSuseso.update();
                     }
                     else
                     {
                         Console.WriteLine("NO  EXISTE EL REGISTRO {0} EN JUR_ADMINISTRATIVA", dtRow[0].ToString());
-                        string sAID = dtRow[0].ToString();
                         miJurAdmin.sumario = dtRow[2].ToString();
                         miJurAdmin.fechaSentencia = Convert.ToDateTime(dtRow[7]);
                         miJurAdmin.titulo = dtRow[1].ToString();
-                        miJurAdmin.rol = dtRow[0].ToString(); 
+                        miJurAdmin.rol = dtRow[0].ToString();
                         miJurAdmin.fechaRegistro = Convert.ToDateTime(dtRow[4]);
                         miJurAdmin.linkOrigen = dtRow[0].ToString() + "_archivo_01.pdf";
                         miJurAdmin.tipoDocumento = Convert.ToInt32(ConfigurationManager.AppSettings["DocumentType"]);
-
-                        miJurAdmin.linkOrigen = savePdf(PDFPath, sAID);
+                        miJurAdmin.linkOrigen = miSuseso.savePdf(sAID);
 
                         string sLocalPath = PDFPath + sAID + "_archivo_01.pdf";
-                        miJurAdmin.textoSentencia = "NO DISPONIBLE";// extractTextFromPDF(sLocalPath);
-                        miJurAdmin.Add();
-
+                        miJurAdmin.textoSentencia = miSuseso.extractTextFromPDF(sLocalPath);
+                        miJurAdmin.addElement();
+                        miSuseso.update();
                     }
                 }
-                Console.WriteLine("-----fin de ejecucion "+DateTime.Now +"----");
-            } 
+                Console.WriteLine("-----fin de ejecucion " + DateTime.Now + "----");
+            }
             catch (Exception ex)
             {
                 Console.WriteLine("[Fatal Error]\r\n" + ex.Message + "\r\n" + ex.StackTrace + "\r\n" + ex.InnerException + "\r\n" + ex.Source);
                 Console.WriteLine("........ERROR GENERAL");
             }
-        }
-
-        /// <summary>
-        /// save PDF from website SUSESO with AID
-        /// </summary>
-        /// <param name="PDFPath">path for save PDF file</param>
-        /// <param name="sAid">unique ID for PDF file</param>
-        /// <returns> string with link </returns>
-        public static string  savePdf(string PDFPath, string sAid)
-        {
-            string sUrlPDF = "https://www.suseso.cl/612/articles-" + sAid + "_archivo_01.pdf";
-            string sLocalPDF = PDFPath + sAid + "_archivo_01.pdf";
-
-            using (WebClient webClient = new WebClient())
-            {
-                webClient.DownloadFile(sUrlPDF, sLocalPDF);
-                return sUrlPDF;
-            }
-        }
-        public static string extractWebSuseso(string URL)
-        {
-            try
-            {
-                string docImportSrc = string.Empty;
-                string infoBase = "";
-                
-                using (WebClient webClient = new WebClient())       //get JSON from suseso
-                {
-                    docImportSrc = URL;
-                    infoBase = webClient.DownloadString(URL);
-                }
-                Console.WriteLine("load website Ok");
-                return infoBase;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("[Fatal Error]\r\n" + ex.Message + "\r\n" + ex.StackTrace + "\r\n" + ex.InnerException + "\r\n" + ex.Source);
-                Console.WriteLine("........Fail");
-                return "error";
-            }
-        }
-
-        /// <summary>
-        /// Extract text from PDFFile
-        /// </summary>
-        /// <param name="filePath">local file path </param>
-        /// <returns>string with the content of PDF file</returns>
-        public static string extractTextFromPDF(string filePath)
-        {
-            PdfReader pdfReader = new PdfReader(filePath);
-            PdfDocument pdfDoc = new PdfDocument(pdfReader);
-            string pageContent = "";
-            for (int page = 1; page <= pdfDoc.GetNumberOfPages(); page++)
-            {
-                ITextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
-                pageContent = PdfTextExtractor.GetTextFromPage(pdfDoc.GetPage(page), strategy);
-            }
-            pdfDoc.Close();
-            pdfReader.Close();
-            return pageContent;
         }
     }
 }

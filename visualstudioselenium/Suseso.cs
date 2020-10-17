@@ -5,6 +5,11 @@ using System.Configuration;
 using System.Data;
 using System.Data.SQLite;
 using Microsoft.Data.Sqlite;
+using System.Net;
+using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Canvas.Parser.Listener;
+using iText.Kernel.Pdf.Canvas.Parser;
+
 namespace suseso
 {
     public class Suseso
@@ -16,9 +21,6 @@ namespace suseso
 
         [JsonProperty("pid")]
         public string pid { get; set; }
-
-        [JsonProperty("property-value_620_pvid")]
-        public string property_value_620_pvid { get; set; }
 
         [JsonProperty("id")]
         public string id { get; set; }
@@ -96,7 +98,7 @@ namespace suseso
         /// insert instance of suseso to SQLite Database.
         /// </summary>
         /// <returns> OK/Error </returns>
-        public string Add()
+        public string addElement()
         {
             try
             {
@@ -120,6 +122,36 @@ namespace suseso
                 else
                 {
                     return "error en el ingreso";
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[Fatal Error]\r\n" + ex.Message + "\r\n" + ex.StackTrace + "\r\n" + ex.InnerException + "\r\n" + ex.Source);
+                Console.WriteLine("........Fail");
+                return "error";
+            }
+        }
+
+        /// <summary>
+        /// update status in SUSESO SQLite DB
+        /// </summary>
+        /// <returns>string with  OK/Error</returns>
+        public string update()
+        {
+            try
+            {
+                this.myDataManager = new DataManager(this.conStringSQLite);
+                string SQL = "update SUSESO set status=1 where aid=" + this.aid;
+
+                string sMsg = myDataManager.setData(SQL);
+                if (sMsg == "ok")
+                {
+                    Console.WriteLine("El registro  \"{0}\" actualizado correctamente.", this.aid);
+                    return "ok";
+                }
+                else
+                {
+                    return "error en la actualizacion.";
                 }
             }
             catch (Exception ex)
@@ -159,13 +191,81 @@ namespace suseso
         /// <summary>
         /// Obtain all records from suseso table with status "0" -->pending
         /// </summary>
-        /// <returns></returns>
+        /// <returns>dataset with records from SUSESO with status 0 - pending </returns>
         public DataTable getAll()
         {
             this.myDataManager = new DataManager(this.conStringSQLite);
             string SQL = "select aid,title,abstract,name,insertDate,status,rol,sentenceDate from SUSESO where status=0";
             DataTable miDataTable = myDataManager.getData(SQL);
             return miDataTable;
+        }
+
+        /// <summary>
+        /// save PDF from website SUSESO with AID
+        /// </summary>
+        /// <param name="PDFPath">path for save PDF file</param>
+        /// <param name="sAid">unique ID for PDF file</param>
+        /// <returns> string with link </returns>
+        public  string savePdf(string sAid)
+        {
+            string PDFPath = ConfigurationManager.AppSettings["PDFPath"];               //Path to save PDF
+            string sUrlPDF = "https://www.suseso.cl/612/articles-" + sAid + "_archivo_01.pdf";
+            string sLocalPDF = PDFPath + sAid + "_archivo_01.pdf";
+
+            using (WebClient webClient = new WebClient())
+            {
+                webClient.DownloadFile(sUrlPDF, sLocalPDF);
+                return sUrlPDF;
+            }
+        }
+
+        /// <summary>
+        /// extract text from SUSESO Web Site
+        /// </summary>
+        /// <param name="URL">URL SUSESO Web</param>
+        /// <returns>string with the suseso dump</returns>
+        public string extractWebSuseso(string URL)
+        {
+            try
+            {
+                string docImportSrc = string.Empty;
+                string infoBase = "";
+
+                using (WebClient webClient = new WebClient())       //get JSON from suseso
+                {
+                    docImportSrc = URL;
+                    webClient.Encoding = System.Text.Encoding.UTF8;
+                    infoBase = webClient.DownloadString(URL);
+                }
+                Console.WriteLine("load website Ok");
+                return infoBase;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[Fatal Error]\r\n" + ex.Message + "\r\n" + ex.StackTrace + "\r\n" + ex.InnerException + "\r\n" + ex.Source);
+                Console.WriteLine("........Fail");
+                return "error";
+            }
+        }
+
+        /// <summary>
+        /// Extract text from PDFFile
+        /// </summary>
+        /// <param name="filePath">local file path </param>
+        /// <returns>string with the content of PDF file</returns>
+        public string extractTextFromPDF(string filePath)
+        {
+            PdfReader pdfReader = new PdfReader(filePath);
+            PdfDocument pdfDoc = new PdfDocument(pdfReader);
+            string pageContent = "";
+            for (int page = 1; page <= pdfDoc.GetNumberOfPages(); page++)
+            {
+                ITextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
+                pageContent = pageContent + "Page:" + page.ToString() + "-" + PdfTextExtractor.GetTextFromPage(pdfDoc.GetPage(page), strategy);
+            }
+            pdfDoc.Close();
+            pdfReader.Close();
+            return pageContent;
         }
     }
 }

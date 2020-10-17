@@ -6,6 +6,8 @@ namespace suseso
 {
     public class JurAdmin
     {
+        #region PROPERTIES
+        private string conStringSQL = ConfigurationManager.ConnectionStrings["conStringSQL"].ConnectionString;
         public string GUID { get; set; }
         public int tipoDocumento { get; set; }
         public string cita { get; set; }
@@ -19,7 +21,6 @@ namespace suseso
         public DateTime fechaRegistro { get; set; }
         public int migrado { get; set; }
 
-        private string conStringSQL = ConfigurationManager.ConnectionStrings["conStringSQL"].ConnectionString;
         private DataManager _myDataManager;
         private DataManager myDataManager
         {
@@ -31,8 +32,7 @@ namespace suseso
         {
 
         }
-
-
+        #endregion
         /// <summary>
         ///  Validate AID
         ///  If the record exists, then it returns true
@@ -65,7 +65,7 @@ namespace suseso
         /// insert instance of JUR_ADMINISTRATIVA to SQL Database.
         /// </summary>
         /// <returns> OK/Error </returns>
-        public string Add()
+        public string addElement()
         {
             try
             {
@@ -73,7 +73,6 @@ namespace suseso
 
                 string sfechaRegistro = this.fechaRegistro.Date.ToString("yyyy/MM/dd HH:mm:ss");
                 string sfechaSentencia= this.fechaSentencia.Date.ToString("yyyy/MM/dd HH:mm:ss");
-
 
                 string SQL = "INSERT INTO JUR_ADMINISTRATIVA (" +
                              "[GUID]" +
@@ -90,7 +89,6 @@ namespace suseso
                               ",[MIGRADO]" +
                               ") VALUES(" + "'',1,'NO DISPONIBLE','NO DISPONIBLE',"+this.rol+ ",'" + sfechaSentencia+"','" + this.titulo+"','"+this.sumario+"','"+
                               this.textoSentencia + "','" +this.linkOrigen+ "','" + sfechaRegistro + "',1)";
-
 
                 string sMsg = myDataManager.setDataSQL(SQL);
                 if (sMsg == "ok")
@@ -110,7 +108,5 @@ namespace suseso
                 return "error";
             }
         }
-
-
     }
 }
