@@ -8,6 +8,13 @@ namespace suseso
 {
     public class Email
     {
+        private string conStringSQL = ConfigurationManager.ConnectionStrings["conStringSQL"].ConnectionString;
+        private DataManager _myDataManager;
+        private DataManager myDataManager
+        {
+            get => _myDataManager;
+            set => _myDataManager = new DataManager(conStringSQL);
+        }
         public Email()
         {
         }
@@ -15,7 +22,6 @@ namespace suseso
         private string getTemplateXML()
         {
             string text = string.Empty;
-
             System.IO.StreamReader sr = new System.IO.StreamReader(ConfigurationManager.AppSettings["EmailTemplate"].ToString(), System.Text.Encoding.Default);
             text = sr.ReadToEnd();
             sr.Close();
@@ -40,14 +46,12 @@ namespace suseso
             rowIndicador += this.getRowTemplate(i++, fecha, "Total", "0", sinprocesar, procesados, importados);
 
             emailBody = emailBody.Replace("[##FALLOS##]", rowIndicador);
-            this.grabarEmail(emailBody);
-
+            string sResultEmail = this.saveEmail(emailBody);
         }
 
-
-        private void grabarEmail(string msgHTML)
+        private string saveEmail(string msgHTML)
         {
-
+            this.myDataManager = new DataManager(this.conStringSQL);
             string cs = ConfigurationManager.AppSettings["EmailCS"].ToString();
             string DeNombre = ConfigurationManager.AppSettings["EmaildeNombre"].ToString();
             string DeCorreo = ConfigurationManager.AppSettings["EmaildeCorreo"].ToString();
@@ -55,13 +59,22 @@ namespace suseso
             string ResponderA = ConfigurationManager.AppSettings["EmailResponderA"].ToString();
             string ParaCC = ConfigurationManager.AppSettings["EmailParaCC"].ToString();
             string ContentHTML = "1";
-
             string EmailNombre = ConfigurationManager.AppSettings["EmailNombre"].ToString();
             string EmailEmail = ConfigurationManager.AppSettings["EmailEmail"].ToString();
 
-            string query = "INSERT INTO ErrMail(ErrNombreDe, ErrMailDe, ErrNombrePara, ErrMailPara, ErrTitulo, ErrMensaje, ErrResponderA, ErrParaCC,ErrTipoMensaje, ErrFechaError, ErrFechaEnviado, ErrEnviado, ErrNroIntento) ";
-            query += " VALUES('" + DeNombre + "',  '" + DeCorreo + "', '" + EmailNombre + "', '" + EmailEmail + "', '" + Titulo + "', '" + msgHTML + "', '" + ResponderA + "', '" + ParaCC + "', " + ContentHTML + ", GETDATE(), NULL, 0, 0 )";
+            string SQL = "INSERT INTO ErrMail(ErrNombreDe, ErrMailDe, ErrNombrePara, ErrMailPara, ErrTitulo, ErrMensaje, ErrResponderA, ErrParaCC,ErrTipoMensaje, ErrFechaError, ErrFechaEnviado, ErrEnviado, ErrNroIntento) ";
+            SQL += " VALUES('" + DeNombre + "',  '" + DeCorreo + "', '" + EmailNombre + "', '" + EmailEmail + "', '" + Titulo + "', '" + msgHTML + "', '" + ResponderA + "', '" + ParaCC + "', " + ContentHTML + ", GETDATE(), NULL, 0, 0 )";
 
+            string sMsg = myDataManager.setDataSQL(SQL);
+            if (sMsg == "ok")
+            {
+                Console.WriteLine("El correo fue ingresado correctamente.");
+                return "ok";
+            }
+            else
+            {
+                return "error en el ingreso";
+            }
         }
         private string getRowTemplate(int i, string fecha, string titulo, string id, int sinprocesar, int procesados, int grabados)
         {
@@ -127,7 +140,6 @@ namespace suseso
 
             return percent.ToString("n2");
         }
-
 
         public string sendEmail()
         {
