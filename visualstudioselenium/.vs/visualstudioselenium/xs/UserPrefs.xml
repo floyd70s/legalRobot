@@ -1,24 +1,17 @@
 ﻿<Properties StartupConfiguration="{A2A37DF4-DA04-49F1-BA3D-815A619BAC9D}|Default">
   <MonoDevelop.Ide.ItemProperties.suseso PreferredExecutionTarget="MonoDevelop.Default" />
   <MonoDevelop.Ide.Workbench>
-    <Files>
-      <File FileName="Program.cs" Line="182" Column="10" />
-      <File FileName="Suseso.cs" Line="134" Column="1" />
-      <File FileName="JurAdmin.cs" Line="113" Column="1" />
-    </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State name="__root__">
           <Node name="visualstudioselenium" expanded="True" selected="True">
             <Node name="Solution Items" expanded="True" />
-            <Node name="suseso" expanded="True" />
           </Node>
         </State>
       </Pad>
       <Pad Id="MonoDevelop.Debugger.WatchPad">
         <State>
-          <Value>ElementSuseso</Value>
-          <Value>jResult</Value>
+          <Value>SQL</Value>
         </State>
       </Pad>
     </Pads>
@@ -27,7 +20,12 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|anycpu" />
   <Debugger.DebugSourceFolders />
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
-    <BreakpointStore />
+    <BreakpointStore>
+      <Breakpoint file="/Users/claudioperez/Documents/programacion/legalRobot/visualstudioselenium/Suseso.cs" relfile="Suseso.cs" line="300" column="1" />
+      <Breakpoint file="/Users/claudioperez/Documents/programacion/legalRobot/visualstudioselenium/Suseso.cs" relfile="Suseso.cs" line="149" column="1" />
+      <Breakpoint file="/Users/claudioperez/Documents/programacion/legalRobot/visualstudioselenium/Suseso.cs" relfile="Suseso.cs" line="119" column="1" />
+      <Breakpoint file="/Users/claudioperez/Documents/programacion/legalRobot/visualstudioselenium/Email.cs" relfile="Email.cs" line="43" column="1" />
+    </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MultiItemStartupConfigurations />
 </Properties>

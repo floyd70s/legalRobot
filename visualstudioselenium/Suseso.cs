@@ -70,16 +70,6 @@ namespace suseso
         [JsonProperty("using_cids")]
         public string using_cids { get; set; }
 
-        public int _rol;
-        public int rol {
-            get {
-                return _rol;
-            }
-            set
-            {
-                _rol = Convert.ToInt32(this.hl1.Substring(9));
-            }
-        }
 
         private string conStringSQLite = ConfigurationManager.ConnectionStrings["conStringSQLite"].ConnectionString;
         private DataManager _myDataManager;
@@ -111,7 +101,7 @@ namespace suseso
                             "'" + System.DateTime.Now + "'," +
                             "0," +
                             "'" + this.sentenceDate.ToString("yyyy/MM/dd") + "'," +
-                            "" + this.rol + ");";
+                            "" + Convert.ToInt32(this.hl1.Substring(8).Trim()) + ");";
 
                 string sMsg = myDataManager.setData(SQL);
                 if (sMsg == "ok")
@@ -172,6 +162,8 @@ namespace suseso
             DataTable dtTemp;
             this.myDataManager = new DataManager(this.conStringSQLite);
 
+
+            string rol = this.hl1.Substring(8).Trim();
             string sSQL = "select AID from SUSESO where AID=" + this.aid + " LIMIT 1;";
             dtTemp = this.myDataManager.getData(sSQL);
             if (dtTemp.Rows.Count > 0)
@@ -255,17 +247,59 @@ namespace suseso
         /// <returns>string with the content of PDF file</returns>
         public string extractTextFromPDF(string filePath)
         {
-            PdfReader pdfReader = new PdfReader(filePath);
-            PdfDocument pdfDoc = new PdfDocument(pdfReader);
-            string pageContent = "";
-            for (int page = 1; page <= pdfDoc.GetNumberOfPages(); page++)
+            try
             {
-                ITextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
-                pageContent = pageContent + "Page:" + page.ToString() + "-" + PdfTextExtractor.GetTextFromPage(pdfDoc.GetPage(page), strategy);
+                PdfReader pdfReader = new PdfReader(filePath);
+                PdfDocument pdfDoc = new PdfDocument(pdfReader);
+                string pageContent = "";
+                for (int page = 1; page <= pdfDoc.GetNumberOfPages(); page++)
+                {
+                    ITextExtractionStrategy strategy = new SimpleTextExtractionStrategy();
+                    pageContent = pageContent + "-" + PdfTextExtractor.GetTextFromPage(pdfDoc.GetPage(page), strategy);
+                }
+                pdfDoc.Close();
+                pdfReader.Close();
+                return pageContent;
             }
-            pdfDoc.Close();
-            pdfReader.Close();
-            return pageContent;
+            catch (Exception ex)
+            {
+                Console.WriteLine("[Fatal Error]\r\n" + ex.Message + "\r\n" + ex.StackTrace + "\r\n" + ex.InnerException + "\r\n" + ex.Source);
+                Console.WriteLine("........Fail");
+                return "";
+            }
+        }
+
+        /// <summary>
+        /// method for extract JSON from website string
+        /// </summary>
+        /// <param name="siteBase"></param>
+        /// <returns></returns>
+        public string extractJson(string siteBase)
+        {
+           
+            int iniJson = siteBase.IndexOf("[");
+            int endJson = siteBase.IndexOf("properties");
+            return siteBase.Substring(iniJson, endJson - iniJson - 3);
+        }
+        /// <summary>
+        /// obtain number of element from JSON
+        /// </summary>
+        /// <param name="siteBase"></param>
+        /// <returns></returns>
+        public int extractNumberOfElements(string siteBase)
+        {
+            try { 
+            int iniResult = siteBase.IndexOf("num_results");
+            int endResult = siteBase.IndexOf("hits_number");
+            string sNumber = siteBase.Substring(iniResult + 14, endResult - iniResult - 17).Trim();
+            return Convert.ToInt32(sNumber);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[Fatal Error]\r\n" + ex.Message + "\r\n" + ex.StackTrace + "\r\n" + ex.InnerException + "\r\n" + ex.Source);
+                Console.WriteLine("........Fail");
+                return 0;
+            }
         }
     }
 }

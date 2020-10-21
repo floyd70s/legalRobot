@@ -14,7 +14,7 @@ using System.Dynamic;
 
 namespace suseso
 {
-    class MainClass
+    class MainClass 
     {
         public static void Main(string[] args)
         {
@@ -23,8 +23,8 @@ namespace suseso
                 Console.Clear();
                 int range = Convert.ToInt32(ConfigurationManager.AppSettings["range"]);     //365 days
                 string PDFPath = ConfigurationManager.AppSettings["PDFPath"];               //Path to save PDF
-                string iniDate = DateTime.Now.AddDays(-365).ToString("yyyy/MM/dd"); ;       // DateTime.Now.AddDays(-365).ToString("yyyy/MM/dd"); 
-                string endDate = DateTime.Now.ToString("yyyy/MM/dd");                       // DateTime.Now.ToString("yyyy/MM/dd"); 
+                string iniDate = DateTime.Now.AddDays(-range).ToString("yyyy/MM/dd"); ;     // initial search date
+                string endDate = DateTime.Now.ToString("yyyy/MM/dd");                       // search end date
                 int start = 0;                                                              // start for pagination
                 int group = 0;                                                              // group for pagination 
                 string jResult = "-";                                                       // string for save JSON 
@@ -34,13 +34,16 @@ namespace suseso
                 int iMainCount = 0;                                                         // total number of records analyzed
                 int iNotSaved = 0;                                                          // total number of records not saved
                 int iPage = 0;                                                              // page
+                int iCountJur = 0;                                                          // count register for JUR_ADMIN
+                int iCountNoNewsJur = 0;                                                    // unsaved record count for JUR_ADMIN
+                int iLimit = 100;
                 JurAdmin miJurAdmin = new JurAdmin();                                       // new instance of JurAdmin
                 Suseso miSuseso = new Suseso();                                             // new instance of SUSESO
 
-                while (jResult != "" || start < 128)
+                while (jResult != "" || start < iLimit)
                 {
                     Console.WriteLine("****************************************");
-                    Console.WriteLine(" Ciclo {0} registros:{1} ", iPage, start);
+                    Console.WriteLine(" Página {0} Lote:{1} ", iPage, start);
                     Console.WriteLine("****************************************");
                     iCountCycle = 0;
 
@@ -62,17 +65,23 @@ namespace suseso
                                  "T23%3A59%3A59%20-s%20property-value.546.iso8601%20desc%20title%20desc&" +
                                  "callback=jQuery20009428819093757522_1601343927812&_=1601343927813";
 
-                    string siteBase = miSuseso.extractWebSuseso(URL);
-                    int iniJson = siteBase.IndexOf("[");
-                    int endJson = siteBase.IndexOf("properties");
-
-                    jResult = siteBase.Substring(iniJson, endJson - iniJson - 3);
-
                     //-----------------------------------------------------------------------------------------------------------------------
                     // we get all the data
                     // we create a class that maps the structure of the json obtained from the suseso website --> suseso.cs
                     //-----------------------------------------------------------------------------------------------------------------------
-                    var listElement = JsonConvert.DeserializeObject<List<Suseso>>(jResult);
+                    string siteBase = miSuseso.extractWebSuseso(URL);
+                    jResult = miSuseso.extractJson(siteBase);
+
+                    //-----------------------------------------------------------------------------------------------------------------------
+                    // iLimit--> total number of elements of the JSON service response
+                    //-----------------------------------------------------------------------------------------------------------------------
+                    iLimit = miSuseso.extractNumberOfElements(siteBase);
+
+                   //-----------------------------------------------------------------------------------------------------------------------
+                   // we get all the data
+                   // we create a class that maps the structure of the json obtained from the suseso website --> suseso.cs
+                   //-----------------------------------------------------------------------------------------------------------------------
+                   var listElement = JsonConvert.DeserializeObject<List<Suseso>>(jResult);
 
                     //-----------------------------------------------------------------------------------------------------------------------
                     // we get all the data
@@ -83,7 +92,7 @@ namespace suseso
                         // get records from SQLite database suseso 
                         //-----------------------------------------------------------------------------------------------------------------------
                         bool bExistAID = ElementSuseso.validateAID();
-
+                        
                         if (bExistAID)
                         {
                             sResult = "El registro  \"{0}\" ya fue ingresado anteriormente." + ElementSuseso.aid;
@@ -121,6 +130,44 @@ namespace suseso
                     iPage++;
                 }
 
+
+
+                DataTable miDataTableSuseso = miSuseso.getAll();                //get pending records from SUSESO - Status=0
+
+                foreach (DataRow dtRow in miDataTableSuseso.Rows)
+                {
+                    string sAID = dtRow[0].ToString();
+                    miSuseso.aid = sAID;
+                    miJurAdmin.rol = dtRow[6].ToString();
+                    bool bExistAIDJur = miJurAdmin.validateRol();
+
+                    if (bExistAIDJur)
+                    {
+                        Console.WriteLine("EL REGISTRO {0} YA EXISTE EN JUR_ADMINISTRATIVA", dtRow[0].ToString());
+                        miSuseso.update();
+                        iCountNoNewsJur++;
+                    }
+                    else
+                    {
+                        Console.WriteLine("NO  EXISTE EL REGISTRO {0} EN JUR_ADMINISTRATIVA", dtRow[0].ToString());
+                        miJurAdmin.sumario = dtRow[2].ToString();
+                        miJurAdmin.fechaSentencia = Convert.ToDateTime(dtRow[7]);
+                        miJurAdmin.titulo = dtRow[1].ToString();
+                        miJurAdmin.rol = dtRow[6].ToString();
+                        miJurAdmin.fechaRegistro = Convert.ToDateTime(dtRow[4]);
+                        miJurAdmin.linkOrigen = dtRow[0].ToString() + "_archivo_01.pdf";
+                        miJurAdmin.tipoDocumento = Convert.ToInt32(ConfigurationManager.AppSettings["DocumentType"]);
+                        miJurAdmin.linkOrigen = miSuseso.savePdf(sAID);
+
+                        string sLocalPath = PDFPath + sAID + "_archivo_01.pdf";
+                        miJurAdmin.textoSentencia = miSuseso.extractTextFromPDF(sLocalPath);
+                        miJurAdmin.addElement();
+                        miSuseso.update();
+
+                        iCountJur++;
+                    }
+                }
+
                 #region COMMENTS
                 Console.WriteLine("-----------------------------------------------------------------");
                 Console.WriteLine("-- PASO 1                                                        ");
@@ -131,48 +178,21 @@ namespace suseso
                 Console.WriteLine("-- TOTAL DE REGISTROS NO INGRESADOS:" + iNotSaved);
                 Console.WriteLine("-- PAGINAS RECORRIDAS :" + iCountCycle);
                 Console.WriteLine("-----------------------------------------------------------------");
-
                 Console.WriteLine("-----------------------------------------------------------------");
                 Console.WriteLine("-- PASO 2                                                        ");
                 Console.WriteLine("-- SE CRUZAN LOS DATOS ENTRE LA BD SQLITE Y SQLSERVER            ");
                 Console.WriteLine("-- SE GUARDAN LOS ARCHIVOS PDF                                   ");
                 Console.WriteLine("-- SE GUARDA EN TXT EL CONTENIDO                                 ");
+                Console.WriteLine("-- TOTAL DE REGISTROS REVISADOS :" + miDataTableSuseso.Rows.Count);
+                Console.WriteLine("-- TOTAL DE REGISTROS INGRESADOS:"+ iCountJur);
+                Console.WriteLine("-- TOTAL DE REGISTROS NO INGRESADOS:" + iCountNoNewsJur);
                 Console.WriteLine("-----------------------------------------------------------------");
                 #endregion
 
+                Email miEmail = new Email();
+                miEmail.sendEmail(iMainCount,0, iCountJur);
 
-                DataTable miDataTableSuseso = miSuseso.getAll();                //get pending records from SUSESO - Status=0
-
-                foreach (DataRow dtRow in miDataTableSuseso.Rows)
-                {
-                    string sAID = dtRow[0].ToString();
-                    miSuseso.aid = sAID;
-                    bool bExistAIDJur = miJurAdmin.validateRol();
-
-                    if (bExistAIDJur)
-                    {
-                        Console.WriteLine("EL REGISTRO {0} YA EXISTE EN JUR_ADMINISTRATIVA", dtRow[0].ToString());
-                        miSuseso.update();
-                    }
-                    else
-                    {
-                        Console.WriteLine("NO  EXISTE EL REGISTRO {0} EN JUR_ADMINISTRATIVA", dtRow[0].ToString());
-                        miJurAdmin.sumario = dtRow[2].ToString();
-                        miJurAdmin.fechaSentencia = Convert.ToDateTime(dtRow[7]);
-                        miJurAdmin.titulo = dtRow[1].ToString();
-                        miJurAdmin.rol = dtRow[0].ToString();
-                        miJurAdmin.fechaRegistro = Convert.ToDateTime(dtRow[4]);
-                        miJurAdmin.linkOrigen = dtRow[0].ToString() + "_archivo_01.pdf";
-                        miJurAdmin.tipoDocumento = Convert.ToInt32(ConfigurationManager.AppSettings["DocumentType"]);
-                        miJurAdmin.linkOrigen = miSuseso.savePdf(sAID);
-
-                        string sLocalPath = PDFPath + sAID + "_archivo_01.pdf";
-                        miJurAdmin.textoSentencia = miSuseso.extractTextFromPDF(sLocalPath);
-                        miJurAdmin.addElement();
-                        miSuseso.update();
-                    }
-                }
-                Console.WriteLine("-----fin de ejecucion " + DateTime.Now + "----");
+                Console.WriteLine("-- FIN DE LA EJECUCION " + DateTime.Now + "----");
             }
             catch (Exception ex)
             {

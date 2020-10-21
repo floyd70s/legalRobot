@@ -74,6 +74,10 @@ namespace suseso
                 string sfechaRegistro = this.fechaRegistro.Date.ToString("yyyy/MM/dd HH:mm:ss");
                 string sfechaSentencia= this.fechaSentencia.Date.ToString("yyyy/MM/dd HH:mm:ss");
 
+                this.sumario=this.sumario.Replace("'", "");
+                this.titulo=this.titulo.Replace("'", "");
+                this.textoSentencia=this.textoSentencia.Replace("'", "");
+
                 string SQL = "INSERT INTO JUR_ADMINISTRATIVA (" +
                              "[GUID]" +
                              ",[TIPODOCUMENTO_ID]" +
