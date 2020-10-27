@@ -36,7 +36,7 @@ namespace suseso
         /// <summary>
         ///  Validate AID
         ///  If the record exists, then it returns true
-        ///  Compare ID with ROL
+        ///  Compare ID with ROL AND TIPODOCUMENTO_ID=1 
         /// </summary>
         /// <returns></returns>
         public bool validateRol()
@@ -44,7 +44,7 @@ namespace suseso
             DataTable dtTemp;
             this.myDataManager = new DataManager(this.conStringSQL);
 
-            string sSQL = "SELECT TOP 1 ROL FROM JUR_ADMINISTRATIVA WHERE ROL='" + this.rol + "';";
+            string sSQL = "SELECT TOP 1 ROL FROM JUR_ADMINISTRATIVA WHERE ROL='" + this.rol + " AND TIPODOCUMENTO_ID=1';";
             dtTemp = this.myDataManager.getDataSQL(sSQL);
 
             if (dtTemp.Rows.Count > 0)

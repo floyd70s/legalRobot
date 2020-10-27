@@ -1,13 +1,17 @@
 ﻿<Properties StartupConfiguration="{A2A37DF4-DA04-49F1-BA3D-815A619BAC9D}|Default">
   <MonoDevelop.Ide.ItemProperties.suseso PreferredExecutionTarget="MonoDevelop.Default" />
   <MonoDevelop.Ide.Workbench>
+    <Files>
+      <File FileName="Program.cs" Line="135" Column="13" />
+      <File FileName="Suseso.cs" Line="167" Column="60" />
+      <File FileName="JurAdmin.cs" Line="116" Column="2" />
+    </Files>
     <Pads>
       <Pad Id="ProjectPad">
         <State name="__root__">
-          <Node name="visualstudioselenium" expanded="True" selected="True">
-            <Node name="Solution Items" expanded="True" />
+          <Node name="visualstudioselenium" expanded="True">
             <Node name="suseso" expanded="True">
-              <Node name="Properties" expanded="True" />
+              <Node name="JurAdmin.cs" selected="True" />
             </Node>
           </Node>
         </State>
@@ -19,9 +23,9 @@
   <Debugger.DebugSourceFolders />
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore>
-      <Breakpoint file="/Users/claudioperez/Documents/programacion/legalRobot/visualstudioselenium/Suseso.cs" relfile="Suseso.cs" line="300" column="1" />
-      <Breakpoint file="/Users/claudioperez/Documents/programacion/legalRobot/visualstudioselenium/Suseso.cs" relfile="Suseso.cs" line="149" column="1" />
-      <Breakpoint file="/Users/claudioperez/Documents/programacion/legalRobot/visualstudioselenium/Suseso.cs" relfile="Suseso.cs" line="119" column="1" />
+      <Breakpoint enabled="false" file="/Users/claudioperez/Documents/programacion/legalRobot/visualstudioselenium/Suseso.cs" relfile="Suseso.cs" line="300" column="1" />
+      <Breakpoint enabled="false" file="/Users/claudioperez/Documents/programacion/legalRobot/visualstudioselenium/Suseso.cs" relfile="Suseso.cs" line="149" column="1" />
+      <Breakpoint enabled="false" file="/Users/claudioperez/Documents/programacion/legalRobot/visualstudioselenium/Suseso.cs" relfile="Suseso.cs" line="119" column="1" />
     </BreakpointStore>
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
   <MultiItemStartupConfigurations />
