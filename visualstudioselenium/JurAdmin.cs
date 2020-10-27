@@ -36,7 +36,7 @@ namespace suseso
         /// <summary>
         ///  Validate AID
         ///  If the record exists, then it returns true
-        ///  Compare ID with ROL AND TIPODOCUMENTO_ID=1 
+        ///  Compare ID with ROL
         /// </summary>
         /// <returns></returns>
         public bool validateRol()
@@ -44,7 +44,7 @@ namespace suseso
             DataTable dtTemp;
             this.myDataManager = new DataManager(this.conStringSQL);
 
-            string sSQL = "SELECT TOP 1 ROL FROM JUR_ADMINISTRATIVA WHERE ROL='" + this.rol + " AND TIPODOCUMENTO_ID=1';";
+            string sSQL = "SELECT TOP 1 ROL FROM JUR_ADMINISTRATIVA WHERE ROL='" + this.rol + "';";
             dtTemp = this.myDataManager.getDataSQL(sSQL);
 
             if (dtTemp.Rows.Count > 0)
@@ -72,11 +72,11 @@ namespace suseso
                 this.myDataManager = new DataManager(this.conStringSQL);
 
                 string sfechaRegistro = this.fechaRegistro.Date.ToString("yyyy/MM/dd HH:mm:ss");
-                string sfechaSentencia= this.fechaSentencia.Date.ToString("yyyy/MM/dd HH:mm:ss");
+                string sfechaSentencia = this.fechaSentencia.Date.ToString("yyyy/MM/dd HH:mm:ss");
 
-                this.sumario=this.sumario.Replace("'", "");
-                this.titulo=this.titulo.Replace("'", "");
-                this.textoSentencia=this.textoSentencia.Replace("'", "");
+                this.sumario = this.sumario.Replace("'", "");
+                this.titulo = this.titulo.Replace("'", "");
+                this.textoSentencia = this.textoSentencia.Replace("'", "");
 
                 string SQL = "INSERT INTO JUR_ADMINISTRATIVA (" +
                              "[GUID]" +
@@ -91,8 +91,8 @@ namespace suseso
                               ",[LINKORIGEN]" +
                               ",[FECHAREGISTRO]" +
                               ",[MIGRADO]" +
-                              ") VALUES(" + "'',1,'NO DISPONIBLE','NO DISPONIBLE',"+this.rol+ ",'" + sfechaSentencia+"','" + this.titulo+"','"+this.sumario+"','"+
-                              this.textoSentencia + "','" +this.linkOrigen+ "','" + sfechaRegistro + "',1)";
+                              ") VALUES(" + "'',1,'NO DISPONIBLE','NO DISPONIBLE'," + this.rol + ",'" + sfechaSentencia + "','" + this.titulo + "','" + this.sumario + "','" +
+                              this.textoSentencia + "','" + this.linkOrigen + "','" + sfechaRegistro + "',1)";
 
                 string sMsg = myDataManager.setDataSQL(SQL);
                 if (sMsg == "ok")

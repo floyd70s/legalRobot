@@ -3,12 +3,13 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Configuration;
 using System.Data;
-using System.Data.SQLite;
-using Microsoft.Data.Sqlite;
+//using Microsoft.Data.Sqlite;
 using System.Net;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using iText.Kernel.Pdf.Canvas.Parser;
+using System.IO;
+using System.Web;
 
 namespace suseso
 {
@@ -187,8 +188,9 @@ namespace suseso
         public DataTable getAll()
         {
             this.myDataManager = new DataManager(this.conStringSQLite);
+            //string SQL = "select aid,title,abstract,name,status,rol from SUSESO where status=0";
             string SQL = "select aid,title,abstract,name,insertDate,status,rol,sentenceDate from SUSESO where status=0";
-            DataTable miDataTable = myDataManager.getData(SQL);
+            DataTable miDataTable = myDataManager.getDataTemp(SQL);
             return miDataTable;
         }
 
@@ -198,11 +200,11 @@ namespace suseso
         /// <param name="PDFPath">path for save PDF file</param>
         /// <param name="sAid">unique ID for PDF file</param>
         /// <returns> string with link </returns>
-        public  string savePdf(string sAid)
+        public string savePdf(string sAid)
         {
             string PDFPath = ConfigurationManager.AppSettings["PDFPath"];               //Path to save PDF
             string sUrlPDF = "https://www.suseso.cl/612/articles-" + sAid + "_archivo_01.pdf";
-            string sLocalPDF = PDFPath + sAid + "_archivo_01.pdf";
+            string sLocalPDF = PDFPath + "\\" + sAid + "_archivo_01.pdf";
 
             using (WebClient webClient = new WebClient())
             {
@@ -249,8 +251,15 @@ namespace suseso
         {
             try
             {
-                PdfReader pdfReader = new PdfReader(filePath);
+                //filePath = "C:/Users/Claudio%20Perez/Downloads/poderJudicial/Fallos/xpdf/bin64/la_guerra_de_los_mundos.pdf";
+                //string file = HttpContext.Current.Server.MapPath(filePath);
+
+                FileInfo file = new FileInfo(filePath);
+
+                PdfReader pdfReader = new PdfReader(file);
                 PdfDocument pdfDoc = new PdfDocument(pdfReader);
+
+
                 string pageContent = "";
                 for (int page = 1; page <= pdfDoc.GetNumberOfPages(); page++)
                 {
@@ -260,6 +269,11 @@ namespace suseso
                 pdfDoc.Close();
                 pdfReader.Close();
                 return pageContent;
+
+
+
+
+
             }
             catch (Exception ex)
             {
@@ -276,7 +290,7 @@ namespace suseso
         /// <returns></returns>
         public string extractJson(string siteBase)
         {
-           
+
             int iniJson = siteBase.IndexOf("[");
             int endJson = siteBase.IndexOf("properties");
             return siteBase.Substring(iniJson, endJson - iniJson - 3);
@@ -288,11 +302,12 @@ namespace suseso
         /// <returns></returns>
         public int extractNumberOfElements(string siteBase)
         {
-            try { 
-            int iniResult = siteBase.IndexOf("num_results");
-            int endResult = siteBase.IndexOf("hits_number");
-            string sNumber = siteBase.Substring(iniResult + 14, endResult - iniResult - 17).Trim();
-            return Convert.ToInt32(sNumber);
+            try
+            {
+                int iniResult = siteBase.IndexOf("num_results");
+                int endResult = siteBase.IndexOf("hits_number");
+                string sNumber = siteBase.Substring(iniResult + 14, endResult - iniResult - 17).Trim();
+                return Convert.ToInt32(sNumber);
             }
             catch (Exception ex)
             {

@@ -5,6 +5,8 @@ using System.Configuration;
 using System.Data;
 using System.Data.Sql;
 using System.Data.SqlClient;
+using System.Data.SQLite;
+//using Microsoft.Data.Sqlite;
 
 namespace suseso
 {
@@ -29,14 +31,14 @@ namespace suseso
         public string setData(string query)
         {
             DataTable dt = new DataTable();
-            Microsoft.Data.Sqlite.SqliteConnection connection;
-            Microsoft.Data.Sqlite.SqliteCommand command;
-            connection = new Microsoft.Data.Sqlite.SqliteConnection(this.connectionString);
+            SQLiteConnection connection;
+            SQLiteCommand command;
+            connection = new SQLiteConnection(this.connectionString);
 
             try
             {
                 connection.Open();
-                command = new Microsoft.Data.Sqlite.SqliteCommand(query, connection);
+                command = new SQLiteCommand(query, connection);
                 dt.Load(command.ExecuteReader());
                 connection.Close();
                 return "ok";
@@ -87,14 +89,14 @@ namespace suseso
         public DataTable getData(string query)
         {
             DataTable dt = new DataTable();
-            Microsoft.Data.Sqlite.SqliteConnection connection;
-            Microsoft.Data.Sqlite.SqliteCommand command;
-            connection = new Microsoft.Data.Sqlite.SqliteConnection(connectionString);
+            SQLiteConnection connection;
+            SQLiteCommand command;
+            connection = new SQLiteConnection(connectionString);
 
             try
             {
                 connection.Open();
-                command = new Microsoft.Data.Sqlite.SqliteCommand(query, connection);
+                command = new SQLiteCommand(query, connection);
                 dt.Load(command.ExecuteReader());
                 connection.Close();
             }
@@ -107,6 +109,104 @@ namespace suseso
             return dt;
         }
 
+
+        public DataTable getDataTemp(string query)
+        {
+            DataTable dt = new DataTable();
+            SQLiteConnection connection;
+            SQLiteCommand command;
+            connection = new SQLiteConnection(connectionString);
+            DataColumn column;
+            DataRow row;
+
+            column = new DataColumn();
+            column.DataType = System.Type.GetType("System.Int32");
+            column.ColumnName = "aid";
+            dt.Columns.Add(column);
+
+            column = new DataColumn();
+            column.DataType = System.Type.GetType("System.String");
+            column.ColumnName = "title";
+            dt.Columns.Add(column);
+
+            column = new DataColumn();
+            column.DataType = System.Type.GetType("System.String");
+            column.ColumnName = "abstract";
+            dt.Columns.Add(column);
+
+
+            column = new DataColumn();
+            column.DataType = System.Type.GetType("System.String");
+            column.ColumnName = "name";
+            dt.Columns.Add(column);
+
+
+            column = new DataColumn();
+            column.DataType = System.Type.GetType("System.String");
+            column.ColumnName = "insertDate";
+            dt.Columns.Add(column);
+
+            column = new DataColumn();
+            column.DataType = System.Type.GetType("System.Int32");
+            column.ColumnName = "status";
+            dt.Columns.Add(column);
+
+            column = new DataColumn();
+            column.DataType = System.Type.GetType("System.Int32");
+            column.ColumnName = "rol";
+            dt.Columns.Add(column);
+
+
+            column = new DataColumn();
+            column.DataType = System.Type.GetType("System.String");
+            column.ColumnName = "sentenceDate";
+            dt.Columns.Add(column);
+
+
+            try
+            {
+                connection.Open();
+                command = new SQLiteCommand(query, connection);
+                // dt.Load(command.ExecuteReader());
+                // connection.Close();
+
+                SQLiteDataReader reader = command.ExecuteReader();
+
+
+                while (reader.Read())
+                {
+                    row = dt.NewRow();
+
+                    //select aid, title,abstract,name,insertDate,status,rol,sentenceDate from SUSESO where status=0
+
+                    row["aid"] = reader.GetInt32(0);
+                    row["title"] = reader.GetString(1);
+                    row["abstract"] = reader.GetString(2);
+                    row["name"] = reader.GetString(3);
+                    row["insertDate"] = reader.GetString(4);
+                    row["status"] = reader.GetInt32(5);
+                    row["rol"] = reader.GetInt32(6);
+                    row["sentenceDate"] = reader.GetString(7);
+
+                    dt.Rows.Add(row);
+                }
+                reader.Close();
+                connection.Close();
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("[Fatal Error]\r\n" + ex.Message + "\r\n" + ex.StackTrace + "\r\n" + ex.InnerException + "\r\n" + ex.Source);
+                Console.WriteLine("........Fail");
+            }
+
+            return dt;
+        }
+
+
+
+
+
         /// <summary>
         /// generic function for execute SQL command with SQL SERVER BDDriver.
         /// </summary>
@@ -116,11 +216,11 @@ namespace suseso
         public DataTable getDataSQL(string query)
         {
             DataTable dt = new DataTable();
-            SqlConnection connection =  new SqlConnection(connectionString);
-            SqlCommand command;
-
             try
             {
+                SqlConnection connection = new SqlConnection(connectionString);
+                SqlCommand command;
+
                 connection.Open();
                 command = new SqlCommand(query, connection);
                 dt.Load(command.ExecuteReader());

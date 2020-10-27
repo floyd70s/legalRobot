@@ -1,8 +1,6 @@
 ﻿using System;
-
 using System.Configuration;
 using System.Data;
-using System.Data.SQLite;
 using Microsoft.Data.Sqlite;
 using System.Text;
 using suseso;
@@ -14,7 +12,7 @@ using System.Dynamic;
 
 namespace suseso
 {
-    class MainClass 
+    class MainClass
     {
         public static void Main(string[] args)
         {
@@ -23,7 +21,7 @@ namespace suseso
                 Console.Clear();
                 int range = Convert.ToInt32(ConfigurationManager.AppSettings["range"]);     //365 days
                 string PDFPath = ConfigurationManager.AppSettings["PDFPath"];               //Path to save PDF
-                string iniDate = DateTime.Now.AddDays(-range).ToString("yyyy/MM/dd"); ;     // initial search date
+                string iniDate = DateTime.Now.AddDays(-range).ToString("yyyy/MM/dd");      // initial search date
                 string endDate = DateTime.Now.ToString("yyyy/MM/dd");                       // search end date
                 int start = 0;                                                              // start for pagination
                 int group = 0;                                                              // group for pagination 
@@ -77,11 +75,11 @@ namespace suseso
                     //-----------------------------------------------------------------------------------------------------------------------
                     iLimit = miSuseso.extractNumberOfElements(siteBase);
 
-                   //-----------------------------------------------------------------------------------------------------------------------
-                   // we get all the data
-                   // we create a class that maps the structure of the json obtained from the suseso website --> suseso.cs
-                   //-----------------------------------------------------------------------------------------------------------------------
-                   var listElement = JsonConvert.DeserializeObject<List<Suseso>>(jResult);
+                    //-----------------------------------------------------------------------------------------------------------------------
+                    // we get all the data
+                    // we create a class that maps the structure of the json obtained from the suseso website --> suseso.cs
+                    //-----------------------------------------------------------------------------------------------------------------------
+                    var listElement = JsonConvert.DeserializeObject<List<Suseso>>(jResult);
 
                     //-----------------------------------------------------------------------------------------------------------------------
                     // we get all the data
@@ -92,7 +90,7 @@ namespace suseso
                         // get records from SQLite database suseso 
                         //-----------------------------------------------------------------------------------------------------------------------
                         bool bExistAID = ElementSuseso.validateAID();
-                        
+
                         if (bExistAID)
                         {
                             sResult = "El registro  \"{0}\" ya fue ingresado anteriormente." + ElementSuseso.aid;
@@ -159,7 +157,7 @@ namespace suseso
                         miJurAdmin.tipoDocumento = Convert.ToInt32(ConfigurationManager.AppSettings["DocumentType"]);
                         miJurAdmin.linkOrigen = miSuseso.savePdf(sAID);
 
-                        string sLocalPath = PDFPath + sAID + "_archivo_01.pdf";
+                        string sLocalPath = PDFPath + "\\" + sAID + "_archivo_01.pdf";
                         miJurAdmin.textoSentencia = miSuseso.extractTextFromPDF(sLocalPath);
                         miJurAdmin.addElement();
                         miSuseso.update();
@@ -184,13 +182,13 @@ namespace suseso
                 Console.WriteLine("-- SE GUARDAN LOS ARCHIVOS PDF                                   ");
                 Console.WriteLine("-- SE GUARDA EN TXT EL CONTENIDO                                 ");
                 Console.WriteLine("-- TOTAL DE REGISTROS REVISADOS :" + miDataTableSuseso.Rows.Count);
-                Console.WriteLine("-- TOTAL DE REGISTROS INGRESADOS:"+ iCountJur);
+                Console.WriteLine("-- TOTAL DE REGISTROS INGRESADOS:" + iCountJur);
                 Console.WriteLine("-- TOTAL DE REGISTROS NO INGRESADOS:" + iCountNoNewsJur);
                 Console.WriteLine("-----------------------------------------------------------------");
                 #endregion
 
                 Email miEmail = new Email();
-                miEmail.sendEmail(iMainCount,0, iCountJur);
+                miEmail.sendEmail(iMainCount, 0, iCountJur);
 
                 Console.WriteLine("-- FIN DE LA EJECUCION " + DateTime.Now + "----");
             }
