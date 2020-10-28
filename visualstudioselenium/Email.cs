@@ -8,7 +8,7 @@ namespace suseso
 {
     public class Email
     {
-        private string conStringSQL = ConfigurationManager.ConnectionStrings["conStringSQL"].ConnectionString;
+        private string conStringSQL = ConfigurationManager.ConnectionStrings["EmailCS"].ConnectionString;
         private DataManager _myDataManager;
         private DataManager myDataManager
         {
@@ -52,7 +52,6 @@ namespace suseso
         private string saveEmail(string msgHTML)
         {
             this.myDataManager = new DataManager(this.conStringSQL);
-            string cs = ConfigurationManager.AppSettings["EmailCS"].ToString();
             string DeNombre = ConfigurationManager.AppSettings["EmaildeNombre"].ToString();
             string DeCorreo = ConfigurationManager.AppSettings["EmaildeCorreo"].ToString();
             string Titulo = ConfigurationManager.AppSettings["EmailTitulo"].ToString();

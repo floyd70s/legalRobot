@@ -2,10 +2,7 @@
   <MonoDevelop.Ide.ItemProperties.suseso PreferredExecutionTarget="MonoDevelop.Default" />
   <MonoDevelop.Ide.Workbench>
     <Files>
-      <File FileName="Suseso.cs" Line="321" Column="1" />
-      <File FileName="JurAdmin.cs" Line="117" Column="1" />
-      <File FileName="DataManager.cs" Line="238" Column="1" />
-      <File FileName="app.config" Line="79" Column="17" />
+      <File FileName="app.config" Line="17" Column="70" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
