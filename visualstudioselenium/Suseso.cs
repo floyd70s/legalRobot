@@ -205,6 +205,17 @@ namespace suseso
             string PDFPath = ConfigurationManager.AppSettings["PDFPath"];               //Path to save PDF
             string sUrlPDF = "https://www.suseso.cl/612/articles-" + sAid + "_archivo_01.pdf";
             string sLocalPDF = PDFPath + "\\" + sAid + "_archivo_01.pdf";
+            Console.WriteLine("salida de sLocalPDF: " + sLocalPDF);
+
+
+            WebRequest request = WebRequest.Create(sUrlPDF);
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                //Not found
+                Console.WriteLine("El archivo {0} fue remapeado", sUrlPDF);
+                sUrlPDF = "https://www.suseso.cl/612/articles-" + sAid + "_archivo_01.";
+            }
 
             using (WebClient webClient = new WebClient())
             {
