@@ -19,6 +19,9 @@ namespace suseso
             try
             {
                 Console.Clear();
+                Console.WriteLine("****************************************");
+                Console.WriteLine(" Version 1.0.01  09-11-2020");
+                Console.WriteLine("****************************************");
                 int range = Convert.ToInt32(ConfigurationManager.AppSettings["range"]);     //365 days
                 string PDFPath = ConfigurationManager.AppSettings["PDFPath"];               //Path to save PDF
                 string iniDate = DateTime.Now.AddDays(-range).ToString("yyyy/MM/dd");      // initial search date
@@ -191,6 +194,11 @@ namespace suseso
                 miEmail.sendEmail(iMainCount, 0, iCountJur);
 
                 Console.WriteLine("-- FIN DE LA EJECUCION " + DateTime.Now + "----");
+
+                if (ConfigurationManager.AppSettings["Debug"] == "on")
+                {
+                    Console.ReadKey();
+                }
             }
             catch (Exception ex)
             {

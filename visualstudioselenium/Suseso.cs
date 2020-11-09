@@ -207,14 +207,25 @@ namespace suseso
             string sLocalPDF = PDFPath + "\\" + sAid + "_archivo_01.pdf";
             Console.WriteLine("salida de sLocalPDF: " + sLocalPDF);
 
-
-            WebRequest request = WebRequest.Create(sUrlPDF);
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-            if (response.StatusCode == HttpStatusCode.NotFound)
+            try
             {
+                var request = WebRequest.Create(sUrlPDF);
+                using (var response = request.GetResponse())
+                using (var responseStream = response.GetResponseStream())
+                {
+                    // Process the stream
+                }
+            }
+            catch (WebException ex) when ((ex.Response as HttpWebResponse)?.StatusCode == HttpStatusCode.NotFound)
+            {
+                // handle 404 exceptions
                 //Not found
                 Console.WriteLine("El archivo {0} fue remapeado", sUrlPDF);
                 sUrlPDF = "https://www.suseso.cl/612/articles-" + sAid + "_archivo_01.";
+            }
+            catch (WebException ex)
+            {
+                // handle other web exceptions
             }
 
             using (WebClient webClient = new WebClient())
